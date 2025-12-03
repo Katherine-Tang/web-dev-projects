@@ -15,3 +15,7 @@ A curated collection of modern front-end projects built with HTML, CSS, JavaScri
 - Responsive design (desktop & mobile friendly)
 - Focus on user experience and interaction
 - Some projects explore AI-assisted design and productivity
+
+# Run the program
+No setup is required. Simply download the project, double-click the index.html file, and the webpage will open in your browser.
+不需要任何设置。只需下载项目，双击index.html文件，网页就会在浏览器中打开。
