@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>坏情绪粉碎机 | Mood Crusher</title>
+    <style>
+        /* --- 治愈系视觉风格定义 --- */
+        :root {
+            --bg-color: #FFF9F0; /* 温暖的米白色 */
+            --note-color: #FFFAE0; /* 柔和的鹅黄便签 */
+            --text-color: #6B5B55; /* 温暖的深棕色字体 */
+            --accent-pink: #FFC6C6;
+            --accent-blue: #C6E6FF;
+            --accent-green: #D4F0C0;
+            --shadow: 0 8px 24px rgba(149, 137, 126, 0.15);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            font-family: 'Nunito', 'Rounded Mplus 1c', 'Microsoft YaHei', sans-serif;
+            overflow: hidden; /* 防止滚动 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
+
+        /* 主容器 */
+        .app-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        /* 标题区 */
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        p.subtitle {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        /* 便签纸区域 */
+        .note-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin-bottom: 40px;
+            transition: transform 0.3s ease;
+        }
+
+        /* 拟物化便签 */
+        .sticky-note {
+            width: 100%;
+            height: 100%;
+            background-color: var(--note-color);
+            box-shadow: var(--shadow);
+            border-radius: 4px 4px 20px 4px; /* 右下角微卷 */
+            padding: 25px;
+            box-sizing: border-box;
+            transform: rotate(-2deg); /* 轻微倾斜更自然 */
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        .sticky-note::after {
+            content: '';
+            position: absolute;
+            bottom: 15px;
+            right: 5px;
+            width: 30px;
+            height: 30px;
+            background: rgba(0,0,0,0.05);
+            transform: skew(10deg) rotate(5deg);
+            filter: blur(5px);
+            z-index: -1;
+        }
+
+        /* 胶带装饰 */
+        .tape {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.6);
+            border-left: 2px dotted rgba(0,0,0,0.05);
+            border-right: 2px dotted rgba(0,0,0,0.05);
+            opacity: 0.8;
+            z-index: 2;
+        }
+
+        /* 输入框样式 */
+        textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            resize: none;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            font-family: inherit;
+            outline: none;
+            text-align: center;
+        }
+
+        textarea::placeholder {
+            color: rgba(107, 91, 85, 0.4);
+        }
+
+        /* 工具栏 */
+        .tools-dock {
+            display: flex;
+            gap: 20px;
+            background: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: var(--shadow);
+            transform: translateY(0);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .tool-btn {
+            width: 60px;
+            height: 60px;
+            border: none;
+            border-radius: 50%;
+            background: #f8f8f8;
+            cursor: pointer;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .tool-btn:hover {
+            transform: scale(1.15) translateY(-5px);
+        }
+
+        .tool-btn:active {
+            transform: scale(0.95);
+        }
+
+        .tool-btn.hammer { background: var(--accent-pink); color: white; }
+        .tool-btn.fan { background: var(--accent-blue); color: white; }
+        .tool-btn.bubble { background: var(--accent-green); color: white; }
+
+        /* 成功反馈层 */
+        .success-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .success-overlay.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .success-emoji { font-size: 4rem; margin-bottom: 10px; display: block; }
+        .success-text { font-size: 1.5rem; color: var(--text-color); font-weight: bold; }
+        .restart-btn {
+            margin-top: 20px;
+            padding: 10px 25px;
+            background: var(--text-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        /* Canvas 画布 - 用于特效 */
+        #effectCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* 隐藏类 */
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="effectCanvas"></canvas>
+
+    <div class="app-container">
+        <header id="header">
+            <h1>坏情绪粉碎机</h1>
+            <p class="subtitle">写下来，选个工具，然后和它说拜拜</p>
+        </header>
+
+        <div class="note-wrapper" id="noteWrapper">
+            <div class="sticky-note">
+                <div class="tape"></div>
+                <textarea id="moodInput" placeholder="在这里写下你的烦恼...&#10;比如：&#10;“最近压力好大”&#10;“今天把事情搞砸了”"></textarea>
+            </div>
+        </div>
+
+        <div class="success-overlay" id="successOverlay">
+            <span class="success-emoji">✨</span>
+            <div class="success-text" id="successText">太棒了，坏情绪清零！</div>
+            <button class="restart-btn" onclick="resetApp()">再写一张</button>
+        </div>
+
+        <div class="tools-dock" id="toolsDock">
+            <button class="tool-btn hammer" onclick="crushMood('hammer')" title="重锤粉碎">
+                🔨
+            </button>
+            <button class="tool-btn fan" onclick="crushMood('fan')" title="随风吹散">
+                🍃
+            </button>
+            <button class="tool-btn bubble" onclick="crushMood('bubble')" title="气泡封印">
+                🫧
+            </button>
+        </div>
+    </div>
+
+<script>
+    // --- 配置与状态 ---
+    const canvas = document.getElementById('effectCanvas');
+    const ctx = canvas.getContext('2d');
+    const noteWrapper = document.getElementById('noteWrapper');
+    const moodInput = document.getElementById('moodInput');
+    const toolsDock = document.getElementById('toolsDock');
+    const header = document.getElementById('header');
+    const successOverlay = document.getElementById('successOverlay');
+    const successText = document.getElementById('successText');
+
+    let particles = [];
+    let animationId;
+    let canvasWidth, canvasHeight;
+
+    // 鼓励语库
+    const cheers = [
+        "太棒了，坏情绪清零！",
+        "深呼吸，你已经做得很好了。",
+        "烦恼拜拜，好运快来！",
+        "雨过天晴，你会发光的。",
+        "没有什么能打败可爱的你！"
+    ];
+
+    // 初始化画布尺寸
+    function resizeCanvas() {
+        canvasWidth = window.innerWidth;
+        canvasHeight = window.innerHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // --- 核心功能：粉碎逻辑 ---
+    function crushMood(type) {
+        const text = moodInput.value.trim();
+        
+        // 如果没写内容，轻轻晃动提醒
+        if (!text) {
+            noteWrapper.style.transform = "rotate(-2deg) translateX(10px)";
+            setTimeout(() => noteWrapper.style.transform = "rotate(-2deg) translateX(-10px)", 100);
+            setTimeout(() => noteWrapper.style.transform = "rotate(-2deg)", 200);
+            return;
+        }
+
+        // 1. 隐藏UI，准备动画
+        moodInput.blur();
+        toolsDock.style.transform = "translateY(100px)"; // 下沉隐藏工具栏
+        header.style.opacity = "0";
+
+        // 2. 将文字转化为粒子
+        createParticlesFromText(text, type);
+
+        // 3. 隐藏便签（产生文字变成粒子的错觉）
+        noteWrapper.style.opacity = "0";
+        noteWrapper.style.transform = "scale(0.9) rotate(5deg)";
+
+        // 4. 开始物理模拟
+        animateParticles(type);
+    }
+
+    // --- 粒子系统 ---
+    
+    // 生成文字粒子
+    function createParticlesFromText(text, type) {
+        // 创建一个临时画布来分析文字像素
+        const tmpCanvas = document.createElement('canvas');
+        const tmpCtx = tmpCanvas.getContext('2d');
+        const rect = noteWrapper.getBoundingClientRect(); // 获取便签位置
+        
+        tmpCanvas.width = rect.width;
+        tmpCanvas.height = rect.height;
+
+        // 在临时画布上绘制文字 (模拟 textarea 的样式)
+        tmpCtx.fillStyle = "rgba(0,0,0,0)"; // 透明背景
+        tmpCtx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
+        tmpCtx.font = "20px 'Microsoft YaHei'"; // 字体大小与textarea一致
+        tmpCtx.fillStyle = "#6B5B55"; // 文字颜色
+        tmpCtx.textBaseline = "top";
+        
+        // 简单的自动换行逻辑
+        const lineHeight = 32;
+        const padding = 25;
+        const maxWidth = rect.width - (padding * 2);
+        let words = text.split('');
+        let line = '';
+        let y = padding + 10; // 稍微向下偏移
+        let x = padding;
+
+        for(let n = 0; n < words.length; n++) {
+            let testLine = line + words[n];
+            let metrics = tmpCtx.measureText(testLine);
+            let testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                tmpCtx.fillText(line, x, y);
+                line = words[n];
+                y += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        tmpCtx.fillText(line, x, y);
+
+        // 扫描像素数据
+        const imageData = tmpCtx.getImageData(0, 0, tmpCanvas.width, tmpCanvas.height);
+        const data = imageData.data;
+        
+        // 采样密度（越小粒子越多，越卡）
+        const step = 3; 
+
+        for (let py = 0; py < tmpCanvas.height; py += step) {
+            for (let px = 0; px < tmpCanvas.width; px += step) {
+                // 检查像素透明度
+                const index = (py * tmpCanvas.width + px) * 4;
+                const alpha = data[index + 3];
+                
+                if (alpha > 128) {
+                    // 这是一个文字像素，创建一个粒子
+                    particles.push({
+                        x: rect.left + px,
+                        y: rect.top + py,
+                        originX: rect.left + px,
+                        originY: rect.top + py,
+                        vx: (Math.random() - 0.5) * 4, // 随机水平速度
+                        vy: (Math.random() - 0.5) * 4, // 随机垂直速度
+                        size: Math.random() * 2 + 1,
+                        color: `rgba(${data[index]},${data[index+1]},${data[index+2]}, ${alpha/255})`,
+                        life: 1.0,
+                        type: type // 记录当前模式
+                    });
+                }
+            }
+        }
+    }
+
+    // 动画循环
+    function animateParticles(type) {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        
+        let activeParticles = false;
+
+        for (let i = 0; i < particles.length; i++) {
+            let p = particles[i];
+            
+            if (p.life > 0) {
+                activeParticles = true;
+                
+                // --- 不同的物理规则 ---
+                if (type === 'hammer') {
+                    // 🔨 锤子模式：重力下落，粉碎感
+                    p.vy += 0.8; // 重力大
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.01;
+                    // 地面碰撞
+                    if (p.y > canvasHeight) p.y = canvasHeight; 
+                } 
+                else if (type === 'fan') {
+                    // 🍃 风扇模式：向右飘飞，带正弦波动的风
+                    p.vx += 0.2; // 风力向右加速
+                    p.x += p.vx;
+                    p.y += Math.sin(p.x * 0.05) * 2 - 1; // 上下飘动
+                    p.life -= 0.008;
+                    p.size *= 0.99; // 逐渐变小
+                } 
+                else if (type === 'bubble') {
+                    // 🫧 气泡模式：向上漂浮，变大，透明度降低
+                    p.y -= Math.random() * 3 + 1; // 向上浮
+                    p.x += Math.sin(p.y * 0.05); // 左右摇摆
+                    p.size += 0.05; // 气泡变大
+                    p.life -= 0.015; // 消失得快一点
+                    // 颜色变淡变成气泡色
+                    p.color = `rgba(198, 230, 255, ${p.life})`; 
+                }
+
+                // 绘制粒子
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                if(type === 'bubble') {
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.stroke(); // 气泡是空心的
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${p.life})`;
+                } else {
+                    ctx.fillRect(p.x, p.y, p.size, p.size); // 方块像素
+                }
+                ctx.fill();
+            }
+        }
+
+        if (activeParticles) {
+            animationId = requestAnimationFrame(() => animateParticles(type));
+        } else {
+            // 动画结束，展示成功界面
+            showSuccess();
+        }
+    }
+
+    // --- 结束与反馈 ---
+    function showSuccess() {
+        particles = []; // 清空粒子
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        
+        // 随机彩带特效（简单版）
+        createConfetti();
+
+        // 随机选择一句鼓励语
+        successText.innerText = cheers[Math.floor(Math.random() * cheers.length)];
+        successOverlay.classList.add('visible');
+    }
+
+    function createConfetti() {
+        // 简单的五彩纸屑
+        for(let i=0; i<50; i++) {
+            const x = Math.random() * canvasWidth;
+            const y = Math.random() * canvasHeight - canvasHeight;
+            const color = ['#FFC6C6', '#C6E6FF', '#D4F0C0', '#FFFAE0'][Math.floor(Math.random()*4)];
+            
+            // 这里可以做一个简单的纸屑下落动画，为简化代码，这里仅做一次性静态渲染示意
+            // 若需完整体验，可在 animateParticles 中加入 confetti 数组逻辑
+        }
+    }
+
+    // --- 重置应用 ---
+    function resetApp() {
+        successOverlay.classList.remove('visible');
+        
+        // 恢复 UI 状态
+        setTimeout(() => {
+            moodInput.value = ""; // 清空输入
+            noteWrapper.style.opacity = "1";
+            noteWrapper.style.transform = "rotate(-2deg)";
+            toolsDock.style.transform = "translateY(0)";
+            header.style.opacity = "1";
+        }, 300);
+    }
+
+</script>
+</body>
+</html>
