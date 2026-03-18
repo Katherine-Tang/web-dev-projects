@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 模拟面试官</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f5f7fb;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 32px;
+      color: #1f2d3d;
+    }
+
+    .title p {
+      color: #666;
+      margin-top: 8px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d9dfe8;
+      border-radius: 12px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px dashed #c7ced9;
+      border-radius: 12px;
+      background: #fafbfe;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    .primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .primary:hover {
+      background: #1d4ed8;
+    }
+
+    .secondary {
+      background: #eef2ff;
+      color: #334155;
+    }
+
+    .secondary:hover {
+      background: #e0e7ff;
+    }
+
+    .danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .danger:hover {
+      background: #dc2626;
+    }
+
+    .chat-box {
+      height: 420px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      background: #fbfcff;
+    }
+
+    .msg {
+      margin-bottom: 14px;
+      display: flex;
+    }
+
+    .msg.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 75%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .msg.ai .bubble {
+      background: #e8f0ff;
+      color: #1e3a8a;
+      border-top-left-radius: 4px;
+    }
+
+    .msg.user .bubble {
+      background: #d1fae5;
+      color: #065f46;
+      border-top-right-radius: 4px;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: #666;
+      font-size: 13px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .small-note {
+      color: #777;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .chat-box {
+        height: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">
+      <h1>AI 模拟面试官</h1>
+      <p>支持简历拷打、岗位 JD 拷打、综合模拟面试、语音对话</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <label for="positionName">职位名称</label>
+        <input type="text" id="positionName" placeholder="例如：算法实习生 / 前端开发实习生 / 产品经理" />
+
+        <div style="margin-top:16px;">
+          <label for="mode">面试模式</label>
+          <select id="mode">
+            <option value="resume">简历拷打</option>
+            <option value="jd">岗位需求拷打</option>
+            <option value="mixed">综合拷打</option>
+          </select>
+        </div>
+
+        <div style="margin-top:16px;">
+          <label for="resumeFile">上传简历</label>
+          <input type="file" id="resumeFile" accept=".txt,.pdf,.doc,.docx" />
+          <div class="small-note">请上传 DOCX, txt格式简历；</div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <label for="jdFile">上传 JD 文件</label>
+          <input type="file" id="jdFile" accept=".txt,.pdf,.doc,.docx" />
+          <div class="small-note">请上传 DOCX, txt格式文件；</div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <label for="jdText">或直接粘贴 JD 内容</label>
+          <textarea id="jdText" placeholder="把岗位要求粘贴到这里，例如：熟悉 JavaScript / React / Node.js，具备项目经验……"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" onclick="startInterview()">开始面试</button>
+          <button class="secondary" onclick="startListening()">🎤 开始说话</button>
+          <button class="secondary" onclick="stopListening()">⏹ 停止识别</button>
+          <button class="danger" onclick="clearChat()">清空对话</button>
+        </div>
+
+        <div class="status" id="status">状态：等待开始</div>
+      </div>
+
+      <div class="card">
+        <label>面试对话</label>
+        <div class="chat-box" id="chatBox"></div>
+
+        <div style="margin-top:16px;">
+          <label for="userInput">你的回答</label>
+          <textarea id="userInput" placeholder="可以手动输入，也可以使用语音识别"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" onclick="sendAnswer()">发送回答</button>
+          <button class="secondary" onclick="speakLastAI()">🔊 播放上一条 AI 提问</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let recognition = null;
+    let interviewStarted = false;
+    let lastAIMessage = "";
+    let conversationHistory = [];
+
+    function setStatus(text) {
+      document.getElementById("status").innerText = "状态：" + text;
+    }
+
+    function addMessage(role, text) {
+      const chatBox = document.getElementById("chatBox");
+      const msg = document.createElement("div");
+      msg.className = "msg " + (role === "user" ? "user" : "ai");
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.innerText = text;
+
+      msg.appendChild(bubble);
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      conversationHistory.push({ role, content: text });
+
+      if (role === "ai") {
+        lastAIMessage = text;
+      }
+    }
+
+    function clearChat() {
+      document.getElementById("chatBox").innerHTML = "";
+      document.getElementById("userInput").value = "";
+      conversationHistory = [];
+      lastAIMessage = "";
+      interviewStarted = false;
+      setStatus("已清空");
+      speechSynthesis.cancel();
+    }
+
+    function speakText(text) {
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "zh-CN";
+      utterance.rate = 1.0;
+      speechSynthesis.speak(utterance);
+    }
+
+    function speakLastAI() {
+      if (lastAIMessage) speakText(lastAIMessage);
+    }
+
+    async function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result.split(",")[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function startInterview() {
+      try {
+        setStatus("正在初始化面试...");
+
+        const positionName = document.getElementById("positionName").value.trim();
+        const mode = document.getElementById("mode").value;
+        const jdText = document.getElementById("jdText").value.trim();
+
+        // 构造 system prompt（比你原来更智能）
+        const systemPrompt = `
+    你是一名专业、严格的中文面试官。
+    岗位：${positionName || "未填写"}
+    模式：${mode}
+
+    规则：
+    1. 一次只问一个问题
+    2. 要追问细节
+    3. 不要一次问很多题
+    4. 像真实面试官
+    5. 用中文
+
+    现在开始面试，先简单开场，然后问第一个问题
+    `;
+
+        const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer sk-17db304bd4774578aaeb88a0a3179366"
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              {
+                role: "system",
+                content: systemPrompt
+              }
+            ],
+            temperature: 0.7
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error?.message || "请求失败");
+        }
+
+        const reply = data.choices[0].message.content;
+
+        interviewStarted = true;
+        addMessage("ai", reply);
+        speakText(reply);
+        setStatus("面试已开始");
+
+      } catch (err) {
+        console.error(err);
+        setStatus("启动失败：" + err.message);
+      }
+    }
+
+    async function sendAnswer() {
+      try {
+        const userInput = document.getElementById("userInput").value.trim();
+
+        if (!userInput) {
+          setStatus("请先输入回答");
+          return;
+        }
+
+        if (!interviewStarted) {
+          setStatus("请先点击“开始面试”");
+          return;
+        }
+
+        addMessage("user", userInput);
+        document.getElementById("userInput").value = "";
+        setStatus("AI 正在追问...");
+
+        // ⚠️ 关键：转换历史格式
+        const messages = [
+          {
+            role: "system",
+            content: "你是一个严格的中文面试官，会不断追问候选人"
+          },
+          ...conversationHistory.map(item => ({
+            role: item.role === "ai" ? "assistant" : "user",
+            content: item.content
+          }))
+        ];
+
+        const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer sk-17db304bd4774578aaeb88a0a3179366"
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: messages,
+            temperature: 0.7
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error?.message || "请求失败");
+        }
+
+        const reply = data.choices[0].message.content;
+
+        addMessage("ai", reply);
+        speakText(reply);
+        setStatus("等待你的回答");
+
+      } catch (err) {
+        console.error(err);
+        setStatus("发送失败：" + err.message);
+      }
+    }
+
+    function startListening() {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        setStatus("当前浏览器不支持语音识别，建议使用 Chrome");
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = "zh-CN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setStatus("正在听你说话...");
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        const input = document.getElementById("userInput");
+        input.value = input.value ? input.value + "\n" + transcript : transcript;
+        setStatus("语音识别完成");
+      };
+      recognition.onerror = (e) => setStatus("识别错误：" + e.error);
+      recognition.onend = () => setStatus("语音识别已结束");
+
+      recognition.start();
+    }
+
+    function stopListening() {
+      if (recognition) {
+        recognition.stop();
+        setStatus("已停止识别");
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 模拟正念咨询师</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f7f9f7 0%, #edf4f0 100%);
+      color: #24332a;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 32px;
+      color: #2f4f3e;
+    }
+
+    .title p {
+      color: #5d7065;
+      margin-top: 8px;
+      line-height: 1.7;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(61, 94, 72, 0.08);
+      margin-bottom: 20px;
+      border: 1px solid #e4ece7;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #334e3f;
+    }
+
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d6e2da;
+      border-radius: 12px;
+      outline: none;
+      font-size: 14px;
+      background: #fcfefd;
+      color: #24332a;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #8fb39c;
+      box-shadow: 0 0 0 3px rgba(143, 179, 156, 0.15);
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    .primary {
+      background: #6c9a7d;
+      color: white;
+    }
+
+    .primary:hover {
+      background: #5b876b;
+    }
+
+    .secondary {
+      background: #eef5f0;
+      color: #385646;
+    }
+
+    .secondary:hover {
+      background: #e2eee6;
+    }
+
+    .danger {
+      background: #d96c6c;
+      color: white;
+    }
+
+    .danger:hover {
+      background: #c45858;
+    }
+
+    .chat-box {
+      height: 420px;
+      overflow-y: auto;
+      border: 1px solid #e2ebe5;
+      border-radius: 16px;
+      padding: 16px;
+      background: #f9fcfa;
+    }
+
+    .msg {
+      margin-bottom: 14px;
+      display: flex;
+    }
+
+    .msg.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 78%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 14px;
+    }
+
+    .msg.ai .bubble {
+      background: #e8f3eb;
+      color: #315240;
+      border-top-left-radius: 4px;
+    }
+
+    .msg.user .bubble {
+      background: #eef1ff;
+      color: #3b4673;
+      border-top-right-radius: 4px;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: #5f6d65;
+      font-size: 13px;
+    }
+
+    .small-note {
+      color: #6f7f75;
+      font-size: 13px;
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+
+    .tip-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #f4f8f5;
+      color: #4a6254;
+      font-size: 13px;
+      line-height: 1.7;
+      border: 1px solid #e0e9e3;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-box {
+        height: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">
+      <h1>AI 模拟正念咨询师</h1>
+      <p>
+        一个温和的自我觉察与情绪梳理空间。<br />
+        它可以陪你做呼吸引导、情绪识别、想法梳理与正念对话，但<strong>不能替代专业心理治疗或紧急援助</strong>。
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <label for="theme">这次想聊的主题</label>
+        <input
+          type="text"
+          id="theme"
+          placeholder="例如：焦虑、内耗、失眠、关系压力、学习压力、情绪低落"
+        />
+
+        <div style="margin-top:16px;">
+          <label for="mode">陪伴模式</label>
+          <select id="mode">
+            <option value="mindfulness">正念陪伴</option>
+            <option value="breathing">呼吸放松引导</option>
+            <option value="emotion">情绪觉察与表达</option>
+            <option value="reflection">想法梳理与自我接纳</option>
+          </select>
+        </div>
+
+        <div style="margin-top:16px;">
+          <label for="currentFeeling">你现在的感受</label>
+          <textarea
+            id="currentFeeling"
+            placeholder="可以写：我现在很焦虑，脑子停不下来，担心很多事情……"
+          ></textarea>
+        </div>
+
+        <div style="margin-top:16px;">
+          <label for="supportGoal">你希望获得什么支持</label>
+          <textarea
+            id="supportGoal"
+            placeholder="例如：我想冷静一点 / 我想被理解 / 我想整理清楚自己的情绪 / 我想先缓一缓"
+          ></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" onclick="startSession()">开始陪伴</button>
+          <button class="secondary" onclick="startListening()">🎤 开始说话</button>
+          <button class="secondary" onclick="stopListening()">⏹ 停止识别</button>
+          <button class="danger" onclick="clearChat()">清空对话</button>
+        </div>
+
+        <div class="status" id="status">状态：等待开始</div>
+
+        <div class="tip-box">
+          温馨提示：如果你正处于强烈的自伤、自杀想法，或现实危险中，请立即联系当地紧急援助、心理危机热线，或身边可信任的人。
+        </div>
+      </div>
+
+      <div class="card">
+        <label>正念对话</label>
+        <div class="chat-box" id="chatBox"></div>
+
+        <div style="margin-top:16px;">
+          <label for="userInput">你想说的话</label>
+          <textarea
+            id="userInput"
+            placeholder="你可以自由表达，也可以说：我不知道怎么形容，但我现在很难受……"
+          ></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" onclick="sendAnswer()">发送</button>
+          <button class="secondary" onclick="speakLastAI()">🔊 播放上一条引导</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let recognition = null;
+    let sessionStarted = false;
+    let lastAIMessage = "";
+    let conversationHistory = [];
+
+    function setStatus(text) {
+      document.getElementById("status").innerText = "状态：" + text;
+    }
+
+    function addMessage(role, text) {
+      const chatBox = document.getElementById("chatBox");
+      const msg = document.createElement("div");
+      msg.className = "msg " + (role === "user" ? "user" : "ai");
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.innerText = text;
+
+      msg.appendChild(bubble);
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      conversationHistory.push({ role, content: text });
+
+      if (role === "ai") {
+        lastAIMessage = text;
+      }
+    }
+
+    function clearChat() {
+      document.getElementById("chatBox").innerHTML = "";
+      document.getElementById("userInput").value = "";
+      conversationHistory = [];
+      lastAIMessage = "";
+      sessionStarted = false;
+      setStatus("已清空");
+      speechSynthesis.cancel();
+    }
+
+    function speakText(text) {
+      speechSynthesis.cancel(); 
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "zh-CN";
+      utterance.rate = 0.87;
+      utterance.pitch = 1.12;
+      utterance.volume = 1.0;
+      speechSynthesis.speak(utterance);
+    }
+
+    function speakLastAI() {
+      if (lastAIMessage) speakText(lastAIMessage);
+    }
+
+    async function startSession() {
+      try {
+        setStatus("正在初始化陪伴对话...");
+
+        const theme = document.getElementById("theme").value.trim();
+        const mode = document.getElementById("mode").value;
+        const currentFeeling = document.getElementById("currentFeeling").value.trim();
+        const supportGoal = document.getElementById("supportGoal").value.trim();
+
+        const modeMap = {
+          mindfulness: "正念陪伴",
+          breathing: "呼吸放松引导",
+          emotion: "情绪觉察与表达",
+          reflection: "想法梳理与自我接纳"
+        };
+
+        const systemPrompt = `
+你是一名温柔、稳定、具备正念沟通风格的中文模拟咨询师，主要提供情绪陪伴、正念练习和自我觉察引导。
+你不是临床医生，不做精神疾病诊断，不夸大承诺，不制造依赖。
+
+当前信息：
+- 主题：${theme || "未填写"}
+- 模式：${modeMap[mode] || "正念陪伴"}
+- 来访者当前感受：${currentFeeling || "未填写"}
+- 来访者希望获得的支持：${supportGoal || "未填写"}
+
+你的回应规则：
+1. 用中文，语气温和、接纳、耐心，不说教，不批评
+2. 一次只引导一个重点，不要问太多问题
+3. 优先做情绪接住、觉察、命名感受，而不是急着解决问题
+4. 可以适度加入简短的呼吸引导、身体扫描、正念观察
+5. 避免直接下结论，更多使用“也许、你是否注意到、我们可以一起看看”
+6. 不要自称真人心理医生，要明确这是陪伴式对话
+7. 如果用户表达严重危险、自伤、自杀倾向，要立刻建议联系当地紧急援助和可信任的人
+8. 回复要自然，不要像条款，不要机械重复
+9. 开场先欢迎对方、简单接住情绪，然后根据模式开始第一轮引导
+
+现在开始。
+`;
+
+        const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer sk-17db304bd4774578aaeb88a0a3179366"
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              {
+                role: "system",
+                content: systemPrompt
+              }
+            ],
+            temperature: 0.8
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error?.message || "请求失败");
+        }
+
+        const reply = data.choices[0].message.content;
+
+        sessionStarted = true;
+        addMessage("ai", reply);
+        speakText(reply);
+        setStatus("陪伴已开始");
+      } catch (err) {
+        console.error(err);
+        setStatus("启动失败：" + err.message);
+      }
+    }
+
+    async function sendAnswer() {
+      try {
+        const userInput = document.getElementById("userInput").value.trim();
+
+        if (!userInput) {
+          setStatus("请先输入内容");
+          return;
+        }
+
+        if (!sessionStarted) {
+          setStatus('请先点击“开始陪伴”');
+          return;
+        }
+
+        addMessage("user", userInput);
+        document.getElementById("userInput").value = "";
+        setStatus("咨询师正在回应...");
+
+        const systemPrompt = `
+你是一名温柔、稳定、具备正念沟通风格的中文模拟咨询师。
+你的任务是帮助用户做情绪陪伴、正念觉察、呼吸放松、想法梳理和自我接纳。
+
+规则：
+1. 保持温柔、耐心、不过度分析
+2. 每次回复只聚焦一个重点
+3. 优先接住情绪，再做简短引导
+4. 可使用正念表达，例如：
+   - 先陪自己慢一点
+   - 试着觉察此刻身体的感觉
+   - 不急着评判，只是看见
+5. 不要使用强硬命令口吻
+6. 不做医学诊断，不替代专业心理治疗
+7. 若出现明显自伤、自杀、现实危险信号，立即建议联系紧急援助、危机热线、可信任的人
+8. 回复尽量自然，有陪伴感，不要太像模板
+
+请继续基于上下文进行对话。
+`;
+
+        const messages = [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          ...conversationHistory.map(item => ({
+            role: item.role === "ai" ? "assistant" : "user",
+            content: item.content
+          }))
+        ];
+
+        const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer YOUR_API_KEY_HERE"
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: messages,
+            temperature: 0.8
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error?.message || "请求失败");
+        }
+
+        const reply = data.choices[0].message.content;
+
+        addMessage("ai", reply);
+        speakText(reply);
+        setStatus("等待你的回应");
+      } catch (err) {
+        console.error(err);
+        setStatus("发送失败：" + err.message);
+      }
+    }
+
+    function startListening() {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        setStatus("当前浏览器不支持语音识别，建议使用 Chrome");
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = "zh-CN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setStatus("正在听你说话...");
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        const input = document.getElementById("userInput");
+        input.value = input.value ? input.value + "\n" + transcript : transcript;
+        setStatus("语音识别完成");
+      };
+      recognition.onerror = (e) => setStatus("识别错误：" + e.error);
+      recognition.onend = () => setStatus("语音识别已结束");
+
+      recognition.start();
+    }
+
+    function stopListening() {
+      if (recognition) {
+        recognition.stop();
+        setStatus("已停止识别");
+      }
+    }
+  </script>
+</body>
+</html>

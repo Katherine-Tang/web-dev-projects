@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 目标达成教练</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f7f9f7 0%, #edf4f0 100%);
+      color: #24332a;
+    }
+
+    .container {
+      max-width: 1360px;
+      margin: 24px auto;
+      padding: 20px;
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 34px;
+      color: #2f4f3e;
+    }
+
+    .title p {
+      color: #5d7065;
+      margin-top: 10px;
+      line-height: 1.7;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.94);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(61, 94, 72, 0.08);
+      border: 1px solid #e4ece7;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #334e3f;
+    }
+
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d6e2da;
+      border-radius: 12px;
+      outline: none;
+      font-size: 14px;
+      background: #fcfefd;
+      color: #24332a;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #8fb39c;
+      box-shadow: 0 0 0 3px rgba(143, 179, 156, 0.15);
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    .primary {
+      background: #6c9a7d;
+      color: white;
+    }
+
+    .primary:hover {
+      background: #5b876b;
+    }
+
+    .secondary {
+      background: #eef5f0;
+      color: #385646;
+    }
+
+    .secondary:hover {
+      background: #e2eee6;
+    }
+
+    .danger {
+      background: #d96c6c;
+      color: white;
+    }
+
+    .danger:hover {
+      background: #c45858;
+    }
+
+    .chat-box {
+      height: 420px;
+      overflow-y: auto;
+      border: 1px solid #e2ebe5;
+      border-radius: 16px;
+      padding: 16px;
+      background: #f9fcfa;
+    }
+
+    .msg {
+      margin-bottom: 14px;
+      display: flex;
+    }
+
+    .msg.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 82%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 14px;
+    }
+
+    .msg.ai .bubble {
+      background: #e8f3eb;
+      color: #315240;
+      border-top-left-radius: 4px;
+    }
+
+    .msg.user .bubble {
+      background: #eef1ff;
+      color: #3b4673;
+      border-top-right-radius: 4px;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: #5f6d65;
+      font-size: 13px;
+    }
+
+    .tip-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #f4f8f5;
+      color: #4a6254;
+      font-size: 13px;
+      line-height: 1.7;
+      border: 1px solid #e0e9e3;
+    }
+
+    .small-note {
+      color: #6f7f75;
+      font-size: 13px;
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+
+    .history-title {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      color: #2f4f3e;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 720px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      border: 1px solid #dde8e0;
+      background: #f9fcfa;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .history-item-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #304c3d;
+      margin-bottom: 6px;
+    }
+
+    .history-item-meta {
+      font-size: 12px;
+      color: #6b7d73;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .history-item-summary {
+      font-size: 12px;
+      color: #52655a;
+      line-height: 1.6;
+      background: #ffffff;
+      border: 1px solid #e4ece7;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      max-height: 90px;
+      overflow: hidden;
+      white-space: pre-wrap;
+    }
+
+    .history-btns {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tiny-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .tiny-open {
+      background: #e7f3ea;
+      color: #315240;
+    }
+
+    .tiny-open:hover {
+      background: #d8ecde;
+    }
+
+    .tiny-delete {
+      background: #f8e3e3;
+      color: #974848;
+    }
+
+    .tiny-delete:hover {
+      background: #f3d5d5;
+    }
+
+    .summary-box {
+      min-height: 180px;
+    }
+
+    .footer-note {
+      font-size: 12px;
+      color: #718277;
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-box {
+        height: 360px;
+      }
+
+      .history-list {
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">
+      <h1>AI 目标达成教练</h1>
+      <p>
+        帮你从现状出发，逐步明确目标、拆解路径、推动执行。<br />
+        既可以用于长期事业规划，也可以用于考试冲刺、短期成绩、项目推进和绩效提升。
+      </p>
+    </div>
+
+    <div class="layout">
+      <!-- 左侧历史记录 -->
+      <div class="card">
+        <h3 class="history-title">历史会话记录</h3>
+        <div class="small-note" style="margin-bottom: 12px;">
+          会自动保存到当前浏览器本地。刷新页面后仍可恢复。
+        </div>
+
+        <div class="btn-row" style="margin-top: 0; margin-bottom: 14px;">
+          <button class="secondary" onclick="saveCurrentSession()">💾 保存当前会话</button>
+          <button class="danger" onclick="clearAllSessions()">🗑 清空全部历史</button>
+        </div>
+
+        <div class="history-list" id="historyList">
+          <div class="small-note">暂无历史记录</div>
+        </div>
+
+        <div class="footer-note">
+          说明：历史记录保存在浏览器本地 localStorage，不是云端同步。
+        </div>
+      </div>
+
+      <!-- 右侧主区域 -->
+      <div>
+        <div class="main-grid">
+          <!-- 左：目标输入 -->
+          <div class="card">
+            <label for="theme">目标 / 想处理的主题</label>
+            <input
+              type="text"
+              id="theme"
+              placeholder="例如：期末拿高分 / 30天冲刺雅思 / 提升实习绩效 / 找到更清晰的职业方向"
+            />
+
+            <div style="margin-top:16px;">
+              <label for="mode">教练模式</label>
+              <select id="mode">
+                <option value="goal">目标拆解</option>
+                <option value="exam">考试冲刺</option>
+                <option value="performance">绩效提升</option>
+                <option value="career">长期事业规划</option>
+              </select>
+            </div>
+
+            <div style="margin-top:16px;">
+              <label for="deadline">截止时间 / 目标周期</label>
+              <input
+                type="text"
+                id="deadline"
+                placeholder="例如：20天后 / 本月底 / 3个月内 / 2026年6月"
+              />
+            </div>
+
+            <div style="margin-top:16px;">
+              <label for="timeBudget">你可投入的时间</label>
+              <input
+                type="text"
+                id="timeBudget"
+                placeholder="例如：每天2小时 / 工作日1小时，周末半天"
+              />
+            </div>
+
+            <div style="margin-top:16px;">
+              <label for="currentFeeling">你的现状 / 想法 / 困难</label>
+              <textarea
+                id="currentFeeling"
+                placeholder="例如：我现在目标很多，但总拖延，不知道先做什么；离考试只有20天，但复习很乱；我想提升绩效，但不知道如何证明成果。"
+              ></textarea>
+            </div>
+
+            <div style="margin-top:16px;">
+              <label for="supportGoal">你希望 AI 怎么帮助你</label>
+              <textarea
+                id="supportGoal"
+                placeholder="例如：帮我明确目标 / 帮我拆成每周计划 / 帮我制定冲刺路径 / 帮我持续监督和复盘"
+              ></textarea>
+            </div>
+
+            <div class="btn-row">
+              <button class="primary" onclick="startSession()">开始规划</button>
+              <button class="secondary" onclick="startListening()">🎤 开始说话</button>
+              <button class="secondary" onclick="stopListening()">⏹ 停止识别</button>
+              <button class="danger" onclick="clearChat()">清空当前会话</button>
+            </div>
+
+            <div class="status" id="status">状态：等待开始</div>
+
+            <div class="tip-box">
+              使用建议：就算你现在目标还不清楚，也可以直接描述你的现状。AI 会先帮你梳理问题，再帮助你明确更适合的目标。
+            </div>
+          </div>
+
+          <!-- 右：聊天 -->
+          <div class="card">
+            <label>目标达成对话</label>
+            <div class="chat-box" id="chatBox"></div>
+
+            <div style="margin-top:16px;">
+              <label for="userInput">继续补充你的想法</label>
+              <textarea
+                id="userInput"
+                placeholder="例如：我最大的问题是拖延；我每天只有2小时；我不知道如何证明我的绩效；我已经复习了一半。"
+              ></textarea>
+            </div>
+
+            <div class="btn-row">
+              <button class="primary" onclick="sendAnswer()">发送</button>
+              <button class="secondary" onclick="speakLastAI()">🔊 播放上一条建议</button>
+              <button class="secondary" onclick="generateSummary()">📝 生成本次总结</button>
+            </div>
+
+            <div class="small-note">
+              建议把它当成“目标教练 + 执行伙伴”，持续汇报进展，AI 会帮你不断调整路径。
+            </div>
+          </div>
+        </div>
+
+        <!-- 总结 -->
+        <div class="card">
+          <label for="summaryBox">本次会话总结</label>
+          <textarea
+            id="summaryBox"
+            class="summary-box"
+            placeholder="点击“生成本次总结”后，会显示本轮会话的总结、目标归纳、主要阻碍和下一步行动。"
+          ></textarea>
+
+          <div class="btn-row">
+            <button class="secondary" onclick="copySummary()">📋 复制总结</button>
+            <button class="secondary" onclick="saveCurrentSession()">💾 保存当前会话</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let recognition = null;
+    let sessionStarted = false;
+    let lastAIMessage = "";
+    let conversationHistory = [];
+    let currentSummary = "";
+
+    const STORAGE_KEY = "ai_goal_coach_sessions";
+    const CURRENT_SESSION_KEY = "ai_goal_coach_current_session";
+
+    // 这里换成你的 API Key
+    const API_KEY = "sk-17db304bd4774578aaeb88a0a3179366";
+    const API_URL = "https://api.deepseek.com/v1/chat/completions";
+    const MODEL_NAME = "deepseek-chat";
+
+    function setStatus(text) {
+      document.getElementById("status").innerText = "状态：" + text;
+    }
+
+    function escapeHTML(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function renderChat() {
+      const chatBox = document.getElementById("chatBox");
+      chatBox.innerHTML = "";
+
+      conversationHistory.forEach(item => {
+        const msg = document.createElement("div");
+        msg.className = "msg " + (item.role === "user" ? "user" : "ai");
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.innerText = item.content;
+
+        msg.appendChild(bubble);
+        chatBox.appendChild(msg);
+      });
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function addMessage(role, text) {
+      conversationHistory.push({ role, content: text });
+
+      if (role === "ai") {
+        lastAIMessage = text;
+      }
+
+      renderChat();
+      saveCurrentSessionDraft();
+    }
+
+    function clearChat() {
+      document.getElementById("chatBox").innerHTML = "";
+      document.getElementById("userInput").value = "";
+      document.getElementById("summaryBox").value = "";
+      conversationHistory = [];
+      currentSummary = "";
+      lastAIMessage = "";
+      sessionStarted = false;
+      speechSynthesis.cancel();
+      saveCurrentSessionDraft();
+      setStatus("当前会话已清空");
+    }
+
+    function speakText(text) {
+      if (!text) return;
+      speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "zh-CN";
+      utterance.rate = 0.92;
+      utterance.pitch = 1.03;
+      utterance.volume = 1;
+      speechSynthesis.speak(utterance);
+    }
+
+    function speakLastAI() {
+      if (lastAIMessage) {
+        speakText(lastAIMessage);
+      } else {
+        setStatus("当前没有可播放的 AI 回复");
+      }
+    }
+
+    async function callAI(messages, temperature = 0.7) {
+      if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE") {
+        throw new Error("请先把代码里的 API_KEY 改成你自己的 key");
+      }
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + API_KEY
+        },
+        body: JSON.stringify({
+          model: MODEL_NAME,
+          messages,
+          temperature
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || "请求失败");
+      }
+
+      return data.choices[0].message.content;
+    }
+
+    function getFormData() {
+      return {
+        theme: document.getElementById("theme").value.trim(),
+        mode: document.getElementById("mode").value,
+        deadline: document.getElementById("deadline").value.trim(),
+        timeBudget: document.getElementById("timeBudget").value.trim(),
+        currentFeeling: document.getElementById("currentFeeling").value.trim(),
+        supportGoal: document.getElementById("supportGoal").value.trim()
+      };
+    }
+
+    async function startSession() {
+      try {
+        setStatus("正在初始化目标教练...");
+
+        const {
+          theme,
+          mode,
+          deadline,
+          timeBudget,
+          currentFeeling,
+          supportGoal
+        } = getFormData();
+
+        const modeMap = {
+          goal: "目标拆解",
+          exam: "考试冲刺",
+          performance: "绩效提升",
+          career: "长期事业规划"
+        };
+
+        const systemPrompt = `
+你是一名中文“目标达成教练 / 绩效提升教练”，擅长帮助用户从现状出发，逐步明确真正的目标，并制定可执行路径。
+你的风格应该像一个专业、有推进力、但温和的教练：既能理解用户，也能推动用户行动。
+
+当前信息：
+- 用户输入的目标主题：${theme || "未明确"}
+- 教练模式：${modeMap[mode] || "目标拆解"}
+- 截止时间 / 目标周期：${deadline || "未填写"}
+- 用户可投入时间：${timeBudget || "未填写"}
+- 用户当前现状 / 想法 / 困难：${currentFeeling || "未填写"}
+- 用户希望获得的帮助：${supportGoal || "未填写"}
+
+你的工作方式：
+1. 如果用户目标已经清晰，就帮助拆解路径
+2. 如果用户目标不清晰，就先根据现状帮助用户识别：
+   - 他真正想改善的是什么
+   - 最值得优先解决的问题是什么
+   - 可以转化成怎样的具体目标
+3. 帮用户把模糊想法转成清晰目标，尽量形成：
+   - 结果型目标
+   - 时间范围
+   - 衡量标准
+4. 不要一开始抛太多问题
+5. 每次只推进一小步
+6. 优先输出：
+   - 你目前最核心的问题是什么
+   - 我建议先明确哪个目标
+   - 你下一步先做什么
+7. 如果是考试目标，关注：分数目标、科目弱项、时间周期、复习节奏、刷题与复盘
+8. 如果是绩效目标，关注：成果指标、可见贡献、汇报表达、协作影响力、阶段交付
+9. 如果是长期事业目标，关注：阶段路径、能力差距、资源获取、项目积累、时间线
+10. 回复不要空泛，不要鸡汤，不要过度冗长，要像真实教练在带人前进
+
+回复要求：
+- 用中文
+- 语气自然、清晰、有结构
+- 开场先欢迎用户
+- 然后用一两句话总结用户当前状态
+- 再推进第一步
+- 结尾给一个明确的小动作
+`;
+
+        const openingReply = await callAI([
+          { role: "system", content: systemPrompt }
+        ], 0.7);
+
+        conversationHistory = [];
+        currentSummary = "";
+        document.getElementById("summaryBox").value = "";
+
+        addMessage("ai", openingReply);
+        sessionStarted = true;
+        speakText(openingReply);
+        setStatus("目标教练已启动");
+      } catch (err) {
+        console.error(err);
+        setStatus("启动失败：" + err.message);
+      }
+    }
+
+    async function sendAnswer() {
+      try {
+        const userInput = document.getElementById("userInput").value.trim();
+
+        if (!userInput) {
+          setStatus("请先输入内容");
+          return;
+        }
+
+        if (!sessionStarted) {
+          setStatus("请先点击“开始规划”");
+          return;
+        }
+
+        addMessage("user", userInput);
+        document.getElementById("userInput").value = "";
+        setStatus("教练正在分析你的下一步...");
+
+        const {
+          theme,
+          mode,
+          deadline,
+          timeBudget,
+          currentFeeling,
+          supportGoal
+        } = getFormData();
+
+        const modeMap = {
+          goal: "目标拆解",
+          exam: "考试冲刺",
+          performance: "绩效提升",
+          career: "长期事业规划"
+        };
+
+        const systemPrompt = `
+你是一名中文“目标达成教练 / 绩效提升教练”。
+你不是普通聊天助手，而是在持续帮助用户完成目标。
+
+当前背景：
+- 用户目标主题：${theme || "未明确"}
+- 教练模式：${modeMap[mode] || "目标拆解"}
+- 截止时间 / 周期：${deadline || "未填写"}
+- 可投入时间：${timeBudget || "未填写"}
+- 当前现状 / 困难：${currentFeeling || "未填写"}
+- 希望获得的帮助：${supportGoal || "未填写"}
+
+你必须遵守这些规则：
+1. 不做空泛鼓励，要推动执行
+2. 每次回复只解决一个当前最关键的问题
+3. 优先判断用户所处阶段：
+   - 目标不清
+   - 路径不清
+   - 执行卡住
+   - 缺少反馈
+   - 需要复盘调整
+4. 如果目标仍然模糊，先帮助明确目标
+5. 如果用户卡住，先缩小到“下一步最小行动”
+6. 如果用户混乱，先帮他排序优先级
+7. 如果谈考试，帮他变成：科目拆分、时间分配、错题复盘、冲刺节奏
+8. 如果谈绩效，帮他变成：成果、指标、价值、可汇报表达
+9. 如果谈长期规划，帮他变成：阶段路径、能力差距、资源与时间线
+10. 风格温和但有推进力，不要说教，不要模板化
+
+建议输出结构：
+- 一句判断：你现在最核心的问题是什么
+- 一句推进：现在最重要的是什么
+- 一到三个具体动作
+- 最后给用户一个立即可执行的小任务
+`;
+
+        const messages = [
+          { role: "system", content: systemPrompt },
+          ...conversationHistory.map(item => ({
+            role: item.role === "ai" ? "assistant" : "user",
+            content: item.content
+          }))
+        ];
+
+        const reply = await callAI(messages, 0.7);
+        addMessage("ai", reply);
+        speakText(reply);
+        setStatus("等待你的下一步");
+      } catch (err) {
+        console.error(err);
+        setStatus("发送失败：" + err.message);
+      }
+    }
+
+    async function generateSummary() {
+      try {
+        if (!conversationHistory.length) {
+          setStatus("当前没有可总结的会话内容");
+          return;
+        }
+
+        setStatus("正在生成本次总结...");
+
+        const {
+          theme,
+          mode,
+          deadline,
+          timeBudget,
+          currentFeeling,
+          supportGoal
+        } = getFormData();
+
+        const modeMap = {
+          goal: "目标拆解",
+          exam: "考试冲刺",
+          performance: "绩效提升",
+          career: "长期事业规划"
+        };
+
+        const systemPrompt = `
+你是一名中文目标达成教练。请根据本次完整对话，生成一份清晰、实用、适合回顾执行的会话总结。
+
+当前背景：
+- 目标主题：${theme || "未明确"}
+- 教练模式：${modeMap[mode] || "目标拆解"}
+- 截止时间 / 周期：${deadline || "未填写"}
+- 可投入时间：${timeBudget || "未填写"}
+- 初始现状 / 困难：${currentFeeling || "未填写"}
+- 希望获得的帮助：${supportGoal || "未填写"}
+
+总结尽量包含：
+1. 用户当前现状
+2. 用户真正想达成的目标（如果原本不清晰，请帮忙归纳）
+3. 当前主要阻碍
+4. 已讨论出的关键方向 / 方案
+5. 接下来最重要的行动
+6. 一句提醒
+
+要求：
+- 用中文
+- 结构清晰
+- 实用，不空泛
+- 像教练给用户的会后总结
+- 控制在 300~500 字左右
+`;
+
+        const messages = [
+          { role: "system", content: systemPrompt },
+          ...conversationHistory.map(item => ({
+            role: item.role === "ai" ? "assistant" : "user",
+            content: item.content
+          }))
+        ];
+
+        const reply = await callAI(messages, 0.6);
+        currentSummary = reply;
+        document.getElementById("summaryBox").value = reply;
+
+        addMessage("ai", "这是你本次会话的总结：\n\n" + reply);
+        saveCurrentSessionDraft();
+        setStatus("总结已生成");
+      } catch (err) {
+        console.error(err);
+        setStatus("总结生成失败：" + err.message);
+      }
+    }
+
+    function copySummary() {
+      const summary = document.getElementById("summaryBox").value.trim();
+      if (!summary) {
+        setStatus("当前没有可复制的总结");
+        return;
+      }
+
+      navigator.clipboard.writeText(summary)
+        .then(() => setStatus("总结已复制"))
+        .catch(() => setStatus("复制失败，请手动复制"));
+    }
+
+    function getSavedSessions() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }
+
+    function saveSessions(sessions) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    }
+
+    function saveCurrentSessionDraft() {
+      const formData = getFormData();
+
+      const draft = {
+        ...formData,
+        conversationHistory,
+        currentSummary,
+        updatedAt: new Date().toLocaleString()
+      };
+
+      localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(draft));
+    }
+
+    function loadCurrentSessionDraft() {
+      const raw = localStorage.getItem(CURRENT_SESSION_KEY);
+      if (!raw) return;
+
+      try {
+        const draft = JSON.parse(raw);
+
+        document.getElementById("theme").value = draft.theme || "";
+        document.getElementById("mode").value = draft.mode || "goal";
+        document.getElementById("deadline").value = draft.deadline || "";
+        document.getElementById("timeBudget").value = draft.timeBudget || "";
+        document.getElementById("currentFeeling").value = draft.currentFeeling || "";
+        document.getElementById("supportGoal").value = draft.supportGoal || "";
+
+        conversationHistory = draft.conversationHistory || [];
+        currentSummary = draft.currentSummary || "";
+        document.getElementById("summaryBox").value = currentSummary || "";
+
+        renderChat();
+
+        if (conversationHistory.length > 0) {
+          sessionStarted = true;
+          const lastAI = [...conversationHistory].reverse().find(item => item.role === "ai");
+          lastAIMessage = lastAI ? lastAI.content : "";
+          setStatus("已恢复上次未完成会话");
+        }
+      } catch (e) {
+        console.error("恢复当前草稿失败", e);
+      }
+    }
+
+    function saveCurrentSession() {
+      const formData = getFormData();
+
+      if (!conversationHistory.length) {
+        setStatus("当前没有可保存的会话");
+        return;
+      }
+
+      const session = {
+        id: Date.now(),
+        ...formData,
+        conversationHistory: [...conversationHistory],
+        summary: currentSummary || document.getElementById("summaryBox").value.trim(),
+        createdAt: new Date().toLocaleString()
+      };
+
+      const sessions = getSavedSessions();
+      sessions.unshift(session);
+      saveSessions(sessions);
+      renderHistoryList();
+      saveCurrentSessionDraft();
+      setStatus("当前会话已保存到历史记录");
+    }
+
+    function loadHistorySession(sessionId) {
+      const sessions = getSavedSessions();
+      const session = sessions.find(item => item.id === sessionId);
+      if (!session) {
+        setStatus("未找到该历史记录");
+        return;
+      }
+
+      document.getElementById("theme").value = session.theme || "";
+      document.getElementById("mode").value = session.mode || "goal";
+      document.getElementById("deadline").value = session.deadline || "";
+      document.getElementById("timeBudget").value = session.timeBudget || "";
+      document.getElementById("currentFeeling").value = session.currentFeeling || "";
+      document.getElementById("supportGoal").value = session.supportGoal || "";
+
+      conversationHistory = session.conversationHistory || [];
+      currentSummary = session.summary || "";
+      document.getElementById("summaryBox").value = currentSummary;
+
+      renderChat();
+
+      sessionStarted = conversationHistory.length > 0;
+      const lastAI = [...conversationHistory].reverse().find(item => item.role === "ai");
+      lastAIMessage = lastAI ? lastAI.content : "";
+
+      saveCurrentSessionDraft();
+      setStatus("历史会话已恢复");
+    }
+
+    function deleteHistorySession(sessionId) {
+      const sessions = getSavedSessions().filter(item => item.id !== sessionId);
+      saveSessions(sessions);
+      renderHistoryList();
+      setStatus("该历史记录已删除");
+    }
+
+    function clearAllSessions() {
+      const ok = confirm("确定要清空全部历史记录吗？此操作不可恢复。");
+      if (!ok) return;
+
+      localStorage.removeItem(STORAGE_KEY);
+      renderHistoryList();
+      setStatus("全部历史记录已清空");
+    }
+
+    function renderHistoryList() {
+      const historyList = document.getElementById("historyList");
+      const sessions = getSavedSessions();
+
+      if (!sessions.length) {
+        historyList.innerHTML = '<div class="small-note">暂无历史记录</div>';
+        return;
+      }
+
+      historyList.innerHTML = sessions.map(session => {
+        const title =
+          session.theme && session.theme.trim()
+            ? session.theme.trim()
+            : "未命名会话";
+
+        const summaryText =
+          session.summary && session.summary.trim()
+            ? session.summary.trim()
+            : "暂无总结";
+
+        const modeMap = {
+          goal: "目标拆解",
+          exam: "考试冲刺",
+          performance: "绩效提升",
+          career: "长期事业规划"
+        };
+
+        return `
+          <div class="history-item">
+            <div class="history-item-title">${escapeHTML(title)}</div>
+            <div class="history-item-meta">
+              模式：${escapeHTML(modeMap[session.mode] || session.mode || "未知")}<br />
+              时间：${escapeHTML(session.createdAt || "")}
+            </div>
+            <div class="history-item-summary">${escapeHTML(summaryText)}</div>
+            <div class="history-btns">
+              <button class="tiny-btn tiny-open" onclick="loadHistorySession(${session.id})">打开</button>
+              <button class="tiny-btn tiny-delete" onclick="deleteHistorySession(${session.id})">删除</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function startListening() {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        setStatus("当前浏览器不支持语音识别，建议使用 Chrome");
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = "zh-CN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setStatus("正在听你说话...");
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        const input = document.getElementById("userInput");
+        input.value = input.value ? input.value + "\n" + transcript : transcript;
+        setStatus("语音识别完成");
+      };
+      recognition.onerror = (e) => setStatus("识别错误：" + e.error);
+      recognition.onend = () => setStatus("语音识别已结束");
+
+      recognition.start();
+    }
+
+    function stopListening() {
+      if (recognition) {
+        recognition.stop();
+        setStatus("已停止识别");
+      }
+    }
+
+    window.onload = function () {
+      loadCurrentSessionDraft();
+      renderHistoryList();
+    };
+  </script>
+</body>
+</html>
